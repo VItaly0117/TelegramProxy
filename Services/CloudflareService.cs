@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +21,7 @@ namespace TelegramProxy.Services
             if (File.Exists(targetPath)) return;
             LogMessage?.Invoke("Extracting Embedded cloudflared.exe...");
             using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TelegramProxy.Resources.cloudflared.exe");
-            if (stream == null) throw new FileNotFoundException("Embedded cloudflared.exe not found. Did you add it to Resources and set Build Action to Embedded Resource?");
+            if (stream == null) throw new FileNotFoundException("Embedded cloudflared.exe not found.");
             
             using var fs = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None);
             await stream.CopyToAsync(fs, token).ConfigureAwait(false);
@@ -28,10 +29,11 @@ namespace TelegramProxy.Services
 
         public async Task StartAsync(int localPort, CancellationToken token)
         {
-            var exePath = Path.Combine(Path.GetTempPath(), "cloudflared.exe");
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            var exePath = isWindows ? Path.Combine(Path.GetTempPath(), "cloudflared.exe") : "cloudflared";
             try
             {
-                await ExtractCloudflaredAsync(exePath, token).ConfigureAwait(false);
+                if (isWindows) await ExtractCloudflaredAsync(exePath, token).ConfigureAwait(false);
 
                 _process = new Process
                 {

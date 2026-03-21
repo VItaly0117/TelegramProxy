@@ -15,7 +15,7 @@ namespace TelegramProxy.Services
 
         public SettingsManager()
         {
-            _configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TgProxy");
+            _configDir = AppContext.BaseDirectory;
             _configPath = Path.Combine(_configDir, "config.json");
             Load();
         }
